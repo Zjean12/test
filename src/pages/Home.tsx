@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Shield, Bug, Building2, Trophy, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+
 
 export default function Home() {
   const fadeIn = {
@@ -11,8 +13,10 @@ export default function Home() {
   };
 
   return (
-    <div className="pt-16">
+    <div className="">
+      <Navbar />
       {/* Section Héro avec Vidéo */}
+      
       <section className="relative h-[80vh] overflow-hidden bg-black">
         <div className="relative z-10 h-full flex items-center justify-center text-white">
           <div className="text-center max-w-4xl px-4">

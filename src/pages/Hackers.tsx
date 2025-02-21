@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Trophy, Award, Medal } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 
 const topHackers = [
@@ -96,8 +97,9 @@ const RankIcon = ({ rank }: { rank: number }) => {
 
 export default function Hackers() {
   return (
-    <div className="min-h-screen pt-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 min-h-screen pt-24 bg-gray-50">
         <h1 className="text-3xl font-bold mb-12">Top Security Researchers</h1>
 
         {/* Top 3 Hackers */}

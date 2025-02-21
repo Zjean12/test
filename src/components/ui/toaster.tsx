@@ -5,11 +5,12 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "../ui/toast"
-import { useToast } from "../ui/use-toast"
+} from "../ui/toast";
+import { useToast } from "../ui/use-toast";
 
+// Composant pour afficher les toasts
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToast();
 
   return (
     <ToastProvider>
@@ -25,9 +26,27 @@ export function Toaster() {
             {action}
             <ToastClose />
           </Toast>
-        )
+        );
       })}
       <ToastViewport />
     </ToastProvider>
-  )
+  );
 }
+
+// Exemple de composant pour ajouter un toast
+function ExampleButton() {
+  const { toast } = useToast();
+
+  const handleClick = () => {
+    toast({
+      title: "Report Submitted",
+      description: "Your report has been successfully submitted!",
+      variant: "default", // Utiliser une variante, "default" ou "destructive"
+    });
+  };
+
+  return <button onClick={handleClick}>Submit Report</button>;
+}
+
+// Exporter si besoin
+export { ExampleButton };

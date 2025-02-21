@@ -127,6 +127,7 @@ function LoginForm() {
 
   const onLoginSubmit = async (data: any) => {
     setIsLoading(true);
+    
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -134,11 +135,12 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.email, password: data.password, role }),
       });
+      
 
       if (!response.ok) throw new Error('Identifiants incorrects');
 
       toast({ title: "Connexion réussie", description: "Bienvenue !" });
-      navigate('/#');
+      navigate('/HackerDashboard');
     } catch (error) {
       toast({ variant: "destructive", title: "Echec", description: "Ce compte est enregistré en tant que 'entreprise'." });
     } finally {
@@ -146,6 +148,7 @@ function LoginForm() {
     }
   };
   console.log(role)
+  
 
   return (
     <AuthContainer title="Connexion Hacker">

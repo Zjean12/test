@@ -22,7 +22,7 @@ export default function EmailVerificationEn() {
   const [attempts, setAttempts] = useState(0);
 
   const email = location.state?.email;
-  const role = location.state?.role || localStorage.getItem('role') || 'entreprise';
+  const role = "entreprise";
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Sauvegarde le rôle dans localStorage si trouvé dans location.state

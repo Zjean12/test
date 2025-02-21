@@ -11,9 +11,9 @@ import {
   Users,
   Shield
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '../../components/ui/use-toast';
 
 // Mock data for demonstration
 const notifications = [
@@ -68,7 +68,7 @@ export default function Dashboard() {
       title: "Logged out",
       description: "You have been successfully logged out",
     });
-    navigate('/login');
+    navigate('/entreprise/login');
   };
 
   return (

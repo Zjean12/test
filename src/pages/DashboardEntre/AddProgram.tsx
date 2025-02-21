@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { useToast } from '../components/ui/use-toast';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { useToast } from '../../components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Minus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -283,19 +283,6 @@ export default function AddProgram() {
                         {...props}
                       />
                     ),
-                    code: ({ node, inline, children, ...props }) =>
-                      inline ? (
-                        <code className="bg-gray-100 px-1 rounded" {...props}>
-                          {children}
-                        </code>
-                      ) : (
-                        <pre
-                          className="bg-gray-100 p-3 rounded-2xl mb-3 overflow-auto"
-                          {...props}
-                        >
-                          {children}
-                        </pre>
-                      ),
                     blockquote: ({ node, ...props }) => (
                       <blockquote
                         className="border-l-4 border-gray-500 pl-4 italic text-gray-700"

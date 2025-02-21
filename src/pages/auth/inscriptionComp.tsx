@@ -16,6 +16,7 @@ const companyProfileSchema = z.object({
   address: z.string().min(1, 'L\'adresse est requise'),
   contactPerson: z.string().min(1, 'Le nom du contact est requis'),
   contactPhone: z.string().min(1, 'Le téléphone de contact est requis'),
+  documents: z.array(z.instanceof(File)).min(1, 'Veuillez télécharger au moins un fichier'),
 });
 
 type CompanyProfileForm = z.infer<typeof companyProfileSchema>;
@@ -24,13 +25,13 @@ export default function CompanyProfile() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<CompanyProfileForm>({
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<CompanyProfileForm>({
     resolver: zodResolver(companyProfileSchema)
   });
 
   const onSubmit = async (data: CompanyProfileForm) => {
     try {
-      // TODO: Call your API to update company profile
+      // TODO: Call your API to update company profile and upload files
       console.log('Données du profil de l\'entreprise:', data);
       toast({
         title: "Profil mis à jour",
@@ -44,6 +45,13 @@ export default function CompanyProfile() {
         title: "Erreur",
         description: "Échec de la mise à jour du profil. Veuillez réessayer.",
       });
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setValue('documents', Array.from(files));
     }
   };
 
@@ -153,6 +161,7 @@ export default function CompanyProfile() {
                 accept=".pdf,.doc,.docx"
                 multiple
                 id="documents"
+                onChange={handleFileChange}
               />
               <Button
                 type="button"
@@ -163,6 +172,10 @@ export default function CompanyProfile() {
                 Sélectionner les fichiers
               </Button>
             </div>
+
+            {errors.documents && (
+              <p className="text-red-500 text-sm mt-1">{errors.documents.message}</p>
+            )}
 
             <Button type="submit" className="w-full">
               Compléter le Profil
