@@ -9,8 +9,8 @@ import Footer from '../components/footer';
 
 export default function Home() {
   const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 8, y: 0 },
+    initial: { opacity: 35, y: 20 },
+    animate: { opacity: 35, y: 0 },
     transition: { duration: 0.6 }
   };
   

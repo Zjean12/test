@@ -7,7 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { FieldError } from 'react-hook-form';
 import Header from './HeaderEntre';
-
+import { createProgram, updateProgram, ProgramPayload } from '../../hooks/ApiPrograms';
+import { Program, ScopeItem } from '../../types/programs';
 
 // Définition du schéma de validation avec Zod
 const programSchema = z.object({
@@ -24,32 +25,10 @@ const programSchema = z.object({
 
 type ProgramForm = z.infer<typeof programSchema>;
 
-export interface ScopeItem {
-  id: string;
-  type: string;
-  target: string;
-  description: string;
-  
-}
-
-export interface Program extends ProgramForm {
-  id: string;
-  status: 'Active' | 'Closed';
-  scope: ScopeItem[];
-  reports: number;
-  bounties: string;
-  createdAt: string;
-  lastUpdated: string | null; // Ajoutez cette ligne
-  
-  
-  
-}
-
 interface AddProgramProps {
   onCancel?: () => void;
   onProgramAdded?: (program: Program) => void;
   initialProgram?: Program;
-  
 }
 
 const markdownGuide = `
@@ -100,6 +79,8 @@ function example() {
 export default function AddProgram({ onCancel, onProgramAdded, initialProgram }: AddProgramProps) {
   const [scope, setScope] = useState<ScopeItem[]>(initialProgram?.scope || []);
   const [showPreview, setShowPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, watch, getValues } = useForm<ProgramForm>({
     resolver: zodResolver(programSchema),
@@ -140,26 +121,42 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
 
   const onSubmit = async (data: ProgramForm) => {
     try {
-      const newProgram: Program = {
-        ...data, // Nouvelles données
-        id: initialProgram?.id || Date.now().toString(), // Utiliser l'ID existant ou en générer un nouveau
-        status: initialProgram?.status || 'Active', // Utiliser le statut existant ou définir par défaut 'Active'
-        scope, // Scope défini ailleurs dans le code
-        reports: initialProgram?.reports || 0, // Utiliser le nombre de rapports existant ou définir par défaut 0
-        bounties: initialProgram?.bounties || '$0', // Utiliser les primes existantes ou définir par défaut '$0'
-        createdAt: initialProgram?.createdAt || new Date().toISOString(), // Utiliser la date de création existante ou définir la date actuelle
-        lastUpdated: initialProgram?.lastUpdated || null, // Utiliser la date de mise à jour existante ou définir par défaut null
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Préparer les données à envoyer à l'API
+      const payload: ProgramPayload = {
+        name: data.name,
+        description: data.description,
+        bountyRanges: data.bountyRanges,
+        markdown: data.markdown,
+        scope: scope.map(({ id, ...rest }) => rest) // Enlever l'ID local qui n'est pas nécessaire pour l'API
       };
       
-      console.log('Données du programme:', newProgram);
+      console.log('Envoi des données au backend:', payload);
+      
+      let response;
+      
+      if (initialProgram) {
+        // Mise à jour d'un programme existant
+        response = await updateProgram(initialProgram.id, payload);
+      } else {
+        // Création d'un nouveau programme
+        response = await createProgram(payload);
+      }
+      
+      console.log('Réponse du backend:', response);
       
       if (onProgramAdded) {
-        onProgramAdded(newProgram);
+        onProgramAdded(response);
       }
       
       if (onCancel) onCancel();
-    } catch (error) {
-      console.error('Erreur lors de la création du programme:', error);
+    } catch (err) {
+      console.error('Erreur lors de la soumission du programme:', err);
+      setError('Une erreur est survenue lors de la soumission du programme. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -176,7 +173,6 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
   if (showPreview) {
     return (
       <div className="bg-gray-900">
-        
         <div className="max-w-4xl mx-auto p-6">
           <div className="bg-gray-800 rounded-lg shadow-xl p-8 border border-gray-700">
             <div className="flex items-center mb-6">
@@ -201,7 +197,7 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
                   {Object.entries(formValues.bountyRanges).map(([severity, range]) => (
                     <div key={severity} className="bg-gray-700 p-3 rounded-md">
                       <div className="text-sm font-medium capitalize text-gray-300">{severity}</div>
-                      <div className="text-lg font-semibold text-primary-400">{range}</div>
+                      <div className="text-lg font-semibold text-cyan-400">{range}</div>
                     </div>
                   ))}
                 </div>
@@ -254,9 +250,14 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
                 <button 
                   type="button" 
                   onClick={() => onSubmit(formValues)}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                  disabled={isSubmitting}
+                  className={`flex-1 px-4 py-2 bg-cyan-700 text-white rounded-md hover:bg-cyan-800 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  {initialProgram ? 'Mettre à jour' : 'Confirmer et créer'}
+                  {isSubmitting 
+                    ? 'Envoi en cours...' 
+                    : initialProgram 
+                      ? 'Mettre à jour' 
+                      : 'Confirmer et créer'}
                 </button>
               </div>
             </div>
@@ -267,7 +268,7 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
   }
 
   return (
-    <div className="bg-gray-900">
+    <div className="bg-gray-900 min-h-screen">
       {/* Header */}
       <Header />
       <div className="max-w-4xl mx-auto p-6">
@@ -285,6 +286,12 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
               {initialProgram ? 'Modifier le programme' : 'Créer un nouveau programme'}
             </h1>
           </div>
+
+          {error && (
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-6">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {/* Informations de base */}
@@ -349,9 +356,6 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
               </div>
             </div>
 
-
-
-
             {/* Scope */}
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -359,7 +363,7 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
                 <button 
                   type="button" 
                   onClick={addScopeItem}
-                  className="flex items-center px-3 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-sm"
+                  className="flex items-center px-3 py-1.5 bg-cyan-700 text-white rounded-md hover:bg-cyan-800 text-sm"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Ajouter un élément de scope
@@ -499,9 +503,14 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
               </button>
               <button 
                 type="submit" 
-                className="bg-cyan-700 hover:bg-cyan-950 flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                disabled={isSubmitting}
+                className={`bg-cyan-700 hover:bg-cyan-800 flex-1 px-4 py-2 text-white rounded-md ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {initialProgram ? 'Mettre à jour' : 'Créer le programme'}
+                {isSubmitting 
+                  ? 'Envoi en cours...' 
+                  : initialProgram 
+                    ? 'Mettre à jour' 
+                    : 'Créer le programme'}
               </button>
             </div>
           </form>

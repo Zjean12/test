@@ -3,7 +3,7 @@ import { ArrowLeft, Search, Filter, Check, X, MessageSquare, AlertTriangle } fro
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Report } from './Dashboard';
-import { Program } from './AddProgram';
+import { Program } from '../../types/programs';
 
 interface Hacker {
   id: string;

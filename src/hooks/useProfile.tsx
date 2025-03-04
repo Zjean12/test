@@ -31,8 +31,9 @@ const useProfile = () => {
         const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
           withCredentials: true,
         });
-
+        console.log(response.data)
         setProfile(response.data); // Set profile if authenticated
+        
       } catch (error) {
         setError('Erreur lors de la récupération du profil.');
         if (axios.isAxiosError(error)) {
