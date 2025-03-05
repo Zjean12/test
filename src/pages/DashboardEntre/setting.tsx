@@ -15,6 +15,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import SidebarEnt from './SevbarEnt';
 
 
 
@@ -27,9 +28,11 @@ const predefinedAvatars = [
 ];
 
 export default function Settings() {
+  const [currentView, setCurrentView] = useState('dashboard');
   const [avatar, setAvatar] = useState(() => {
     const savedAvatar = localStorage.getItem('avatar');
     return savedAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=1';
+
   });
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [recoveryCodesRemaining, setRecoveryCodesRemaining] = useState(5);
@@ -67,8 +70,9 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[#141d2b] text-gray-100">
-      <Header avatar={avatar} />
+      <Header avatar={avatar} /><SidebarEnt currentView={currentView} setCurrentView={setCurrentView} />
       <div className="max-w-4xl mx-auto px-4 p-14">
+        
         <div className="bg-[#1a2332] rounded-lg shadow-xl p-6 border border-[#2a3655]">
           <h1 className="text-2xl font-bold mb-6 text-gray-100">Paramètres du compte</h1>
 

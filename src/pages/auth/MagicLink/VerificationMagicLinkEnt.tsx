@@ -25,7 +25,7 @@ const VerificationMagicLink = () => {
       setMessage("❌ Token invalide ou manquant.");
       setHasError(true);
       toast({ variant: "destructive", title: "Erreur", description: "Token invalide ou expiré." });
-      setTimeout(() => navigate("/#"), 2000);
+      setTimeout(() => navigate("/"), 2000);
       return;
     }
 

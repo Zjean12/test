@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { Program } from '../types/programs';
 
-
-// Interface pour les données à envoyer lors de la création/mise à jour
 export interface ProgramPayload {
   name: string;
   description: string;
@@ -18,26 +16,91 @@ export interface ProgramPayload {
     target: string;
     description: string;
   }>;
+  statut: string;
+  programData?: {
+    program: {
+      name: string;
+      exclusions: string[];
+      reward_ranges: {
+        low: string;
+        medium: string;
+        high: string;
+        critical: string;
+      };
+      program_assets: Array<{
+        asset: string;
+        type: string;
+        coverage: string;
+        severity: string;
+        bounty: string;
+      }>;
+      program_rules: string[];
+      test_plan: {
+        instruction: string;
+        guide: string;
+      };
+      documentation: {
+        api_rest: string;
+        integration: string;
+        academy: string;
+        credentials: string;
+      };
+      rewards: {
+        critical: {
+          vulnerability: string;
+          amount: string;
+        };
+        high: {
+          vulnerability: string;
+          amount: string;
+        };
+        medium: {
+          vulnerability: string;
+          amount: string;
+        };
+        low: {
+          vulnerability: string;
+          amount: string;
+        };
+      };
+    };
+  };
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Créer un nouveau programme
-export const createProgram = async (programData: ProgramPayload): Promise<Program> => {
+// Valeurs par défaut pour bountyRanges
+const DEFAULT_BOUNTY_RANGES = {
+  low: "1",
+  medium: "2",
+  high: "3",
+  critical: "4",
+};
+
+
+// Create a new program
+export const createProgram = async (programmeData: ProgramPayload): Promise<Program> => {
   try {
-    // Construire l'objet correctement formaté
-    const payload = {
-      statut: "nouveau",
+    // Vérifie que programmeData.bountyRanges est défini, sinon utilise les valeurs par défaut
+    const bountyRanges = programmeData.bountyRanges || DEFAULT_BOUNTY_RANGES;
+
+    const data = {
+      statut: "nouveau", // Ajout du statut
       programmeData: {
         program: {
-          name: programData.name,
+          name: programmeData.name,
           exclusions: [
             "Attaques d’ingénierie sociale",
             "attaques DDoS",
             "tests de sécurité physique"
           ],
-          reward_ranges: programData.bountyRanges,
-          program_assets: programData.scope.map(asset => ({
+          reward_ranges: {
+            low: `${bountyRanges.low} ₣`, // Utiliser directement la chaîne
+            medium: `${bountyRanges.medium} ₣`,
+            high: `${bountyRanges.high} ₣`,
+            critical: `${bountyRanges.critical} ₣`
+          },
+          program_assets: programmeData.scope.map(asset => ({
             asset: asset.target,
             type: asset.type,
             coverage: "Inclus",
@@ -46,108 +109,159 @@ export const createProgram = async (programData: ProgramPayload): Promise<Progra
           })),
           program_rules: [
             "Veuillez fournir des rapports détaillés avec des étapes reproductibles.",
-            "Si le rapport n'est pas suffisamment détaillé pour reproduire le problème, il ne sera pas éligible à une récompense.",
-            "Soumettez une vulnérabilité par rapport, sauf si vous devez enchaîner des vulnérabilités pour montrer l'impact.",
-            "Lorsque cela est applicable (par exemple, XSS), nous ne récompensons que le premier rapport reçu pour une vulnérabilité spécifique et ne récompenserons pas les doublons.",
-            "Veuillez ne pas forcer nos services.",
-            "L'ingénierie sociale (par exemple, phishing, vishing, smishing) est interdite.",
-            "Faites un effort de bonne foi pour éviter les violations de la vie privée, la destruction des données et l'interruption ou la dégradation de notre service.",
-            "N'interagissez qu'avec des comptes que vous possédez ou avec l'autorisation explicite du titulaire du compte."
+            "Si le rapport n'est pas suffisamment détaillé pour reproduire le problème, il ne sera pas éligible à une récompense."
           ],
           test_plan: {
-            instruction: "Veuillez vous inscrire ici pour obtenir votre compte. Veuillez noter que le service d'inscription n'est pas destiné au piratage.",
-            guide: "Une fois connecté au site, vous pouvez cliquer sur le bouton \"TestPrep\" pour accéder au guide de navigation des fonctionnalités fourni sur la plateforme."
+            instruction: "Veuillez vous inscrire ici pour obtenir votre compte.",
+            guide: "Cliquez sur le bouton 'TestPrep' pour accéder au guide de navigation."
           },
           documentation: {
             api_rest: "Documentation de l'API REST",
             integration: "Documentation d'intégration",
-            academy: "StackPath Academy pour en savoir plus sur les produits SSDLF et BISE.",
+            academy: "StackPath Academy pour en savoir plus.",
             credentials: "h1@example.com:moderator.com#Academy#01"
           },
           rewards: {
-            critical: {
-              vulnerability: "Exécution de code à distance",
-              amount: "3000 $"
-            },
-            high: {
-              vulnerability: "Lecture de fichiers arbitraires",
-              amount: "1500 $"
-            },
-            medium: {
-              vulnerability: "Injection SQL",
-              amount: "500 $"
-            },
-            low: {
-              vulnerability: "XSS (External Entity Processing)",
-              amount: "150 $"
-            }
+            critical: { vulnerability: "Exécution de code à distance", amount: "3000 $" },
+            high: { vulnerability: "Lecture de fichiers arbitraires", amount: "1500 $" },
+            medium: { vulnerability: "Injection SQL", amount: "500 $" },
+            low: { vulnerability: "XSS (External Entity Processing)", amount: "150 $" }
           }
         }
       }
     };
 
-    // Envoyer la requête POST avec le bon format
-    const response = await axios.post(`${API_BASE_URL}/api/programme/add`, payload);
-    
-    return response.data;
+    const response = await axios.post(`${API_BASE_URL}/api/programme/add`, data, { withCredentials: true });
+    return response.data.programme;
   } catch (error) {
-    console.error('Erreur lors de la création du programme:', error);
+    console.error('Error creating program:', error);
     throw error;
   }
+  
 };
 
 
-// Mettre à jour un programme existant
-export const updateProgram = async (id: string, programData: ProgramPayload): Promise<Program> => {
+// Update an existing program
+export const updateProgram = async (programId: string, programmeData: ProgramPayload): Promise<Program> => {
   try {
-    const response = await axios.put(`${API_BASE_URL}/api/programme/update${id}`, programData);
-    return response.data;
+    // Vérifie que programmeData.bountyRanges est défini, sinon utilise les valeurs par défaut
+    const bountyRanges = programmeData.bountyRanges || DEFAULT_BOUNTY_RANGES;
+
+    const data = {
+      programId,
+      statut: "actif", // Ajout du statut
+      programmeData: {
+        program: {
+          name: programmeData.name,
+          exclusions: [
+            "Attaques d’ingénierie sociale",
+            "attaques DDoS",
+            "tests de sécurité physique"
+          ],
+          reward_ranges: {
+            low: `${bountyRanges.low} ₣`, // Utiliser directement la chaîne
+            medium: `${bountyRanges.medium} ₣`,
+            high: `${bountyRanges.high} ₣`,
+            critical: `${bountyRanges.critical} ₣`
+          },
+          program_assets: programmeData.scope.map(asset => ({
+            asset: asset.target,
+            type: asset.type,
+            coverage: "Inclus",
+            severity: "Critique",
+            bounty: "Éligible"
+          })),
+          program_rules: [
+            "Veuillez fournir des rapports détaillés avec des étapes reproductibles.",
+            "Si le rapport n'est pas suffisamment détaillé pour reproduire le problème, il ne sera pas éligible à une récompense."
+          ],
+          test_plan: {
+            instruction: "Veuillez vous inscrire ici pour obtenir votre compte.",
+            guide: "Cliquez sur le bouton 'TestPrep' pour accéder au guide de navigation."
+          },
+          documentation: {
+            api_rest: "Documentation de l'API REST",
+            integration: "Documentation d'intégration",
+            academy: "StackPath Academy pour en savoir plus.",
+            credentials: "h1@example.com:moderator.com#Academy#01"
+          },
+          rewards: {
+            critical: { vulnerability: "Exécution de code à distance", amount: "3000 $" },
+            high: { vulnerability: "Lecture de fichiers arbitraires", amount: "1500 $" },
+            medium: { vulnerability: "Injection SQL", amount: "500 $" },
+            low: { vulnerability: "XSS (External Entity Processing)", amount: "150 $" }
+          }
+        }
+      }
+    };
+
+    const response = await axios.put(`${API_BASE_URL}/api/programme/update`, data, { withCredentials: true });
+    return response.data.programme;
   } catch (error) {
-    console.error(`Erreur lors de la mise à jour du programme ${id}:`, error);
+    console.error(`Error updating program ${programId}:`, error);
     throw error;
   }
 };
-
-// Récupérer tous les programmes
+// Get all programs
 export const getAllPrograms = async (): Promise<Program[]> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/programs`);
-    return response.data;
+    const response = await axios.get(`${API_BASE_URL}/api/programme/user`, { withCredentials: true });
+
+    // Convertir les valeurs de bountyRanges en chaînes si nécessaire
+    const programs = response.data.programmes.map((program: Program) => ({
+      ...program,
+      bountyRanges: {
+        low: String(program.bountyRanges?.low || DEFAULT_BOUNTY_RANGES.low),
+        medium: String(program.bountyRanges?.medium || DEFAULT_BOUNTY_RANGES.medium),
+        high: String(program.bountyRanges?.high || DEFAULT_BOUNTY_RANGES.high),
+        critical: String(program.bountyRanges?.critical || DEFAULT_BOUNTY_RANGES.critical),
+      },
+    }));
+
+    return programs;
   } catch (error) {
-    console.error('Erreur lors de la récupération des programmes:', error);
+    console.error('Error fetching programs:', error);
     throw error;
   }
 };
 
-// Récupérer un programme spécifique
 export const getProgramById = async (id: string): Promise<Program> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/programme/${id}`);
-    return response.data;
+    const response = await axios.get(`${API_BASE_URL}/api/programme/${id}`, { withCredentials: true });
+    const program = response.data.programme;
+
+    // Convertir les valeurs de bountyRanges en chaînes si nécessaire
+    if (!program.bountyRanges) {
+      program.bountyRanges = DEFAULT_BOUNTY_RANGES;
+    } else {
+      program.bountyRanges = {
+        low: String(program.bountyRanges.low),
+        medium: String(program.bountyRanges.medium),
+        high: String(program.bountyRanges.high),
+        critical: String(program.bountyRanges.critical),
+      };
+    }
+
+    return program;
   } catch (error) {
-    console.error(`Erreur lors de la récupération du programme ${id}:`, error);
+    console.error(`Error fetching program ${id}:`, error);
     throw error;
   }
 };
 
-// Mettre à jour le statut d'un programme
-export const updateProgramStatus = async (id: string, status: 'Active' | 'Closed'): Promise<Program> => {
+// Update program status
+export const updateProgramStatus = async (programId: string, status: string): Promise<Program> => {
   try {
-    const response = await axios.patch(`${API_BASE_URL}/api/programme/update/statut${id}/status`, { status });
-    return response.data;
+    const data = {
+      programId,
+      statut: status.toLowerCase() // Ajout du statut
+    };
+
+    const response = await axios.put(`${API_BASE_URL}/api/programme/update/statut`, data, { withCredentials: true });
+    return response.data.programme;
   } catch (error) {
-    console.error(`Erreur lors de la mise à jour du statut du programme ${id}:`, error);
+    console.error(`Error updating program status ${programId}:`, error);
     throw error;
   }
 };
 
-// Récupérer les programmes par utilisateur
-export const getProgramsByUser = async (userId: string): Promise<Program[]> => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/users/${userId}/programs`);
-    return response.data;
-  } catch (error) {
-    console.error(`Erreur lors de la récupération des programmes de l'utilisateur ${userId}:`, error);
-    throw error;
-  }
-};

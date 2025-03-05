@@ -87,20 +87,27 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
     defaultValues: initialProgram ? {
       name: initialProgram.name,
       description: initialProgram.description,
-      bountyRanges: initialProgram.bountyRanges,
+      bountyRanges: {
+        low: String(initialProgram.bountyRanges.low),  // Convertir en string
+        medium: String(initialProgram.bountyRanges.medium),
+        high: String(initialProgram.bountyRanges.high),
+        critical: String(initialProgram.bountyRanges.critical),
+      },
       markdown: initialProgram.markdown,
     } : {
       name: '',
       description: '',
       bountyRanges: {
-        low: '',
-        medium: '',
-        high: '',
-        critical: '',
+        low: "1",    // Valeur par défaut en string
+        medium: "1",
+        high: "1",
+        critical: "1",
       },
       markdown: '',
     }
   });
+  
+  
 
   const addScopeItem = () => {
     setScope([
@@ -123,20 +130,31 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
     try {
       setIsSubmitting(true);
       setError(null);
-      
+  
+      // Utiliser directement les valeurs de bountyRanges comme des chaînes
+      const bountyRanges = {
+        low: data.bountyRanges.low,    // Déjà une chaîne
+        medium: data.bountyRanges.medium,
+        high: data.bountyRanges.high,
+        critical: data.bountyRanges.critical,
+      };
+  
       // Préparer les données à envoyer à l'API
       const payload: ProgramPayload = {
         name: data.name,
         description: data.description,
-        bountyRanges: data.bountyRanges,
+        bountyRanges,  // Utiliser les valeurs directement
         markdown: data.markdown,
-        scope: scope.map(({ id, ...rest }) => rest) // Enlever l'ID local qui n'est pas nécessaire pour l'API
+        scope: scope.map(({ id, ...rest }) => rest), // Enlever l'ID local qui n'est pas nécessaire pour l'API
+        statut: initialProgram ? initialProgram.status : 'nouveau', // Gérer le statut
       };
-      
+  
       console.log('Envoi des données au backend:', payload);
-      
+      console.log('Données envoyées à l\'API:', payload);
+
+  
       let response;
-      
+  
       if (initialProgram) {
         // Mise à jour d'un programme existant
         response = await updateProgram(initialProgram.id, payload);
@@ -144,13 +162,13 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
         // Création d'un nouveau programme
         response = await createProgram(payload);
       }
-      
+  
       console.log('Réponse du backend:', response);
-      
+  
       if (onProgramAdded) {
         onProgramAdded(response);
       }
-      
+  
       if (onCancel) onCancel();
     } catch (err) {
       console.error('Erreur lors de la soumission du programme:', err);
@@ -159,6 +177,9 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
       setIsSubmitting(false);
     }
   };
+  
+  
+  
 
   const handlePreview = () => {
     // Vérifier si le formulaire est valide avant d'afficher l'aperçu
@@ -340,7 +361,8 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
                       <input
                         id={severity}
                         placeholder="$100"
-                        {...register(`bountyRanges.${severity}`)}
+                        type="text"  // Changer en type text
+                        {...register(`bountyRanges.${severity}`)} // Pas besoin de valueAsNumber
                         className={`w-full px-3 py-2 bg-gray-700 border rounded-md text-white ${
                           error ? 'border-red-500' : 'border-gray-600'
                         }`}
@@ -355,6 +377,7 @@ export default function AddProgram({ onCancel, onProgramAdded, initialProgram }:
                 })}
               </div>
             </div>
+
 
             {/* Scope */}
             <div>

@@ -5,7 +5,7 @@ interface SidebarProps {
   setCurrentView: (view: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
+const SidebarEnt: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
   return (
     <div className="fixed left-0 top-0 w-64 h-full bg-gray-800 border-r border-gray-700 shadow-lg">
       <div className="flex items-center p-6 border-b border-gray-700">
@@ -56,4 +56,4 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
   );
 };
 
-export default Sidebar;
+export default SidebarEnt;
