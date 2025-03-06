@@ -13,12 +13,7 @@ export interface Program {
     high: string;
     critical: string;
   };
-  scope: Array<{
-    id: string;
-    type: string;
-    target: string;
-    description: string;
-  }>;
+  scope: ScopeItem[];
   markdown: string;
 }
 

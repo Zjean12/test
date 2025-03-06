@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../components/ui/use-toast';
@@ -123,12 +123,6 @@ export default function Header() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <Link
-                to="/dashboard/settings"
-                className="block w-full text-left text-cyan-500 hover:bg-gray-700 rounded-lg p-2 transition duration-200"
-              >
-                Mon profil
-              </Link>
               <button
                 onClick={onLogout}
                 className="block w-full text-left text-red-500 hover:bg-gray-700 rounded-lg p-2 transition duration-200"

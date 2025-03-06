@@ -19,7 +19,6 @@ import Settings from './pages/DashboardHacker/setting';
 import Earnings from './pages/DashboardHacker/gains';
 import Reports from './pages/DashboardHacker/Rapports';
 import ReportDetails from './pages/DashboardHacker/reports/ReportDetails';
-import EntrepriseSettings from './pages/DashboardEntre/setting';
 
 import { AvatarProvider } from './components/ui/AvatarContext'; // Importer le provider Avatar
 
@@ -46,7 +45,6 @@ const AppRouter = () => {
 
 
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/settings" element={<EntrepriseSettings />} />
 
 
         {/* Routes protégées pour le tableau de bord hacker */}

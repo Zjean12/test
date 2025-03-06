@@ -8,9 +8,10 @@ import {
   X,
   Check,
   AlertTriangle,
-  Clock
+  Clock,
 } from 'lucide-react';
 import AddProgram from './AddProgram';
+import  EditProgram  from './UpdProgramme';
 import Header from './HeaderEntre';
 import { Program } from '../../types/programs';
 import HackerView from './HackerView';
@@ -36,9 +37,9 @@ const initialPrograms = [
       critical: "5000",
     },
     scope: [
-      { id: '1', type: 'Web', target: '*.example.com', description: 'Site web principal' }
+      { id: '1', type: 'Web', target: '*.example.com', description: 'Site web principal' },
     ],
-    markdown: '# Programme de Sécurité des Applications Web\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos applications web.'
+    markdown: '# Programme de Sécurité des Applications Web\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos applications web.',
   },
   {
     id: '2',
@@ -57,9 +58,9 @@ const initialPrograms = [
     },
     scope: [
       { id: '1', type: 'Android', target: 'com.example.app', description: 'Application Android' },
-      { id: '2', type: 'iOS', target: 'com.example.app', description: 'Application iOS' }
+      { id: '2', type: 'iOS', target: 'com.example.app', description: 'Application iOS' },
     ],
-    markdown: '# Programme de Sécurité des Applications Mobiles\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos applications mobiles.'
+    markdown: '# Programme de Sécurité des Applications Mobiles\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos applications mobiles.',
   },
   {
     id: '3',
@@ -77,9 +78,9 @@ const initialPrograms = [
       critical: "7000",
     },
     scope: [
-      { id: '1', type: 'API', target: 'api.example.com', description: 'Points de terminaison API publics' }
+      { id: '1', type: 'API', target: 'api.example.com', description: 'Points de terminaison API publics' },
     ],
-    markdown: '# Programme de Tests de Sécurité des API\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos points de terminaison API.'
+    markdown: '# Programme de Tests de Sécurité des API\n\nCe programme se concentre sur la recherche de vulnérabilités dans nos points de terminaison API.',
   },
 ];
 
@@ -125,9 +126,8 @@ const initialReports = [
     steps: '1. Aller à la page de recherche\n2. Entrer la charge utile suivante : <script>alert(document.cookie)</script>\n3. Soumettre la recherche\n4. Le script s\'exécute et affiche les cookies de l\'utilisateur',
     impact: 'Cette vulnérabilité pourrait permettre aux attaquants de voler les cookies des utilisateurs, d\'effectuer des actions au nom de l\'utilisateur ou de rediriger les utilisateurs vers des sites malveillants.',
     poc: 'https://example.com/search?q=<script>alert(document.cookie)</script>',
-    comments: []
+    comments: [],
   },
-  // ... autres rapports
 ];
 
 export interface Report {
@@ -163,39 +163,37 @@ export default function Dashboard() {
   const [selectedHackerId, setSelectedHackerId] = useState<string | null>(null);
   const [closedProgramsCount, setClosedProgramsCount] = useState(initialPrograms.filter(p => p.status === 'Closed').length);
   const [updatedProgramsCount, setUpdatedProgramsCount] = useState(initialPrograms.filter(p => p.lastUpdated !== null).length);
-  const { profile, loading, error,programme } = useProfile();
+  const { profile, loading, error, programmeDetails, programme } = useProfile();
 
   if (loading) return <p className="text-white">Chargement...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   const handleAddProgram = (program: Program) => {
-    if (!program.bountyRanges || 
-        typeof program.bountyRanges.low !== 'number' ||
-        typeof program.bountyRanges.medium !== 'number' ||
-        typeof program.bountyRanges.high !== 'number' ||
-        typeof program.bountyRanges.critical !== 'number') {
-      console.log(program.bountyRanges)
+    if (!program.bountyRanges ||
+      typeof program.bountyRanges.low !== 'number' ||
+      typeof program.bountyRanges.medium !== 'number' ||
+      typeof program.bountyRanges.high !== 'number' ||
+      typeof program.bountyRanges.critical !== 'number') {
+      console.log(program.bountyRanges);
       return;
     }
-  
+
     const lowRange = program.bountyRanges.low;
     const criticalRange = program.bountyRanges.critical;
     const bountyRange = `${lowRange}€-${criticalRange}€`;
-  
+
     const newProgram = {
       ...program,
-      bounties: bountyRange
+      bounties: bountyRange,
     };
-  
+
     setPrograms([newProgram, ...programs]);
-  }; 
-  console.log("zehia",programme)
-  
-  
+    setCurrentView('dashboard'); // Retour au tableau de bord après l'ajout
+  };
 
   const handleEditProgram = (program: Program) => {
     setProgramToEdit(program);
-    setCurrentView('edit-program');
+    setCurrentView('edit-program'); // Rediriger vers le formulaire de modification
   };
 
   const handleUpdateProgram = (updatedProgram: Program) => {
@@ -206,12 +204,12 @@ export default function Dashboard() {
     const newUpdatedProgram = {
       ...updatedProgram,
       bounties: bountyRange,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
 
     setPrograms(programs.map(p => p.id === newUpdatedProgram.id ? newUpdatedProgram : p));
     setProgramToEdit(null);
-    setCurrentView('dashboard');
+    setCurrentView('dashboard'); // Retour au tableau de bord après la modification
 
     const updatedCount = programs.filter(p => p.id !== newUpdatedProgram.id && p.lastUpdated !== null).length + 1;
     setUpdatedProgramsCount(updatedCount);
@@ -231,22 +229,16 @@ export default function Dashboard() {
         return {
           ...program,
           status: newStatus as 'Active' | 'Closed',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
         };
       }
       return program;
     }));
   };
 
-  const filteredReports = reports.filter(report => {
-    const matchesProgram = !selectedProgramId || report.programId === selectedProgramId;
-    const matchesHacker = !selectedHackerId || report.hackerId === selectedHackerId;
-    return matchesProgram && matchesHacker;
-  });
-
   const handleViewProgramReports = (programId: string) => {
     setSelectedProgramId(programId);
-    setCurrentView('program-reports');
+    setCurrentView('program-reports'); // Rediriger vers les rapports du programme
   };
 
   const updateReportStatus = (reportId: string, newStatus: string, bountyAmount?: string) => {
@@ -255,14 +247,14 @@ export default function Dashboard() {
         const updatedReport = {
           ...report,
           status: newStatus,
-          bounty: bountyAmount || report.bounty
+          bounty: bountyAmount || report.bounty,
         };
 
         const statusComment = {
           id: `c${Date.now()}`,
           author: 'Admin',
           date: new Date().toISOString(),
-          text: `Statut changé en ${newStatus}${bountyAmount ? ` avec un montant de prime de ${bountyAmount}` : ''}`
+          text: `Statut changé en ${newStatus}${bountyAmount ? ` avec un montant de prime de ${bountyAmount}` : ''}`,
         };
 
         updatedReport.comments = [...updatedReport.comments, statusComment];
@@ -280,12 +272,12 @@ export default function Dashboard() {
           id: `c${Date.now()}`,
           author: 'Admin',
           date: new Date().toISOString(),
-          text: commentText
+          text: commentText,
         };
 
         return {
           ...report,
-          comments: [...report.comments, newComment]
+          comments: [...report.comments, newComment],
         };
       }
       return report;
@@ -300,7 +292,7 @@ export default function Dashboard() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -308,67 +300,72 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <SidebarEnt currentView={currentView} setCurrentView={setCurrentView} />
       <div className="ml-64 p-8">
-        {currentView === 'programs' ? (
-          <AddProgram
-            onCancel={() => setCurrentView('dashboard')}
-            onProgramAdded={handleAddProgram}
-          />
-        ) : currentView === 'edit-program' && programToEdit ? (
-          <AddProgram
-            onCancel={() => {
-              setProgramToEdit(null);
-              setCurrentView('dashboard');
-            }}
-            onProgramAdded={handleUpdateProgram}
-            initialProgram={programToEdit}
-          />
-        ) : currentView === 'hackers' ? (
-          <HackerView
-            hackers={hackers}
-            reports={filteredReports}
-            programs={programs}
-            onSelectProgram={setSelectedProgramId}
-            onSelectHacker={setSelectedHackerId}
-            selectedProgramId={selectedProgramId}
-            selectedHackerId={selectedHackerId}
-          />
-        ) : currentView === 'program-reports' ? (
-          <ProgramReports
-            reports={reports.filter(r => r.programId === selectedProgramId)}
-            program={programs.find(p => p.id === selectedProgramId)!}
-            hackers={hackers}
-            onBack={() => setCurrentView('dashboard')}
-            onUpdateStatus={updateReportStatus}
-            onAddComment={addCommentToReport}
-          />
-        ) : (
-          <>
-            <Header />
+      {currentView === 'programs' ? (
+        // Afficher le formulaire d'ajout
+        <AddProgram
+          onCancel={() => setCurrentView('dashboard')} // Retour au tableau de bord
+          onProgramAdded={handleAddProgram} // Gestion de l'ajout
+        />
+      ) : currentView === 'edit-program' && programToEdit ? (
+        // Afficher le formulaire de modification
+        <EditProgram
+          onCancel={() => {
+            setProgramToEdit(null); // Réinitialiser le programme à modifier
+            setCurrentView('dashboard'); // Retour au tableau de bord
+          }}
+          onProgramUpdated={handleUpdateProgram} // Gestion de la mise à jour
+          program={programToEdit} // ✅ Utilisation correcte // Passer le programme à modifier
+        />
+      ) : currentView === 'hackers' ? (
+        // Afficher la vue des hackers
+        <HackerView
+          hackers={hackers}
+          reports={reports}
+          programs={programs}
+          onSelectProgram={setSelectedProgramId}
+          onSelectHacker={setSelectedHackerId}
+          selectedProgramId={selectedProgramId}
+          selectedHackerId={selectedHackerId}
+        />
+      ) : currentView === 'program-reports' ? (
+        // Afficher les rapports du programme
+        <ProgramReports
+          reports={reports.filter(r => r.programId === selectedProgramId)}
+          program={programs.find(p => p.id === selectedProgramId)!}
+          hackers={hackers}
+          onBack={() => setCurrentView('dashboard')}
+          onUpdateStatus={updateReportStatus}
+          onAddComment={addCommentToReport}
+        />
+      ) : (
+        // Afficher le tableau de bord par défaut
+        <>
+          <Header />
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
               {[
                 {
                   title: 'Programmes Actifs',
                   value: programs.filter(p => p.status === 'Active').length.toString(),
                   color: 'bg-primary-600',
-                  icon: <FileText className="h-6 w-6 text-primary-300" />
+                  icon: <FileText className="h-6 w-6 text-primary-300" />,
                 },
                 {
                   title: 'Programmes Fermés',
                   value: closedProgramsCount.toString(),
                   color: 'bg-red-600',
-                  icon: <X className="h-6 w-6 text-red-300" />
+                  icon: <X className="h-6 w-6 text-red-300" />,
                 },
                 {
                   title: 'Programmes Mis à Jour',
                   value: updatedProgramsCount.toString(),
                   color: 'bg-blue-600',
-                  icon: <Clock className="h-6 w-6 text-blue-300" />
+                  icon: <Clock className="h-6 w-6 text-blue-300" />,
                 },
                 {
                   title: 'Rapports Totaux',
                   value: programs.reduce((sum, p) => sum + p.reports, 0).toString(),
                   color: 'bg-emerald-600',
-                  icon: <AlertTriangle className="h-6 w-6 text-emerald-300" />
+                  icon: <AlertTriangle className="h-6 w-6 text-emerald-300" />,
                 },
                 {
                   title: 'Primes Totales',
@@ -377,7 +374,7 @@ export default function Dashboard() {
                     return sum + amount;
                   }, 0).toLocaleString() + '€',
                   color: 'bg-purple-600',
-                  icon: <Shield className="h-6 w-6 text-purple-300" />
+                  icon: <Shield className="h-6 w-6 text-purple-300" />,
                 },
               ].map((stat, index) => (
                 <motion.div
@@ -409,7 +406,6 @@ export default function Dashboard() {
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter un Programme
-                  {programme?.name }
                 </button>
               </div>
 

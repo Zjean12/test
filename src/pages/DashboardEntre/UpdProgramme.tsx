@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { FieldError } from 'react-hook-form';
 import Header from './HeaderEntre';
-import { createProgram, ProgramPayload } from '../../hooks/ApiPrograms';
+import { updateProgram, ProgramPayload } from '../../hooks/ApiPrograms';
 import { Program, ScopeItem } from '../../types/programs';
 
 const programSchema = z.object({
@@ -24,9 +24,10 @@ const programSchema = z.object({
 
 type ProgramForm = z.infer<typeof programSchema>;
 
-interface AddProgramProps {
+interface EditProgramProps {
+  program: Program;
   onCancel?: () => void;
-  onProgramAdded?: (program: Program) => void;
+  onProgramUpdated?: (program: Program) => void;
 }
 
 const markdownGuide = `
@@ -74,8 +75,8 @@ function example() {
 > Ceci est une citation
 `;
 
-export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps) {
-  const [scope, setScope] = useState<ScopeItem[]>([]);
+export default function EditProgram({ program, onCancel, onProgramUpdated }: EditProgramProps) {
+  const [scope, setScope] = useState<ScopeItem[]>(program.scope || []);
   const [showPreview, setShowPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,15 +85,10 @@ export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps
   const { register, handleSubmit, formState: { errors }, watch, getValues } = useForm<ProgramForm>({
     resolver: zodResolver(programSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      bountyRanges: {
-        low: '',
-        medium: '',
-        high: '',
-        critical: '',
-      },
-      markdown: '',
+      name: program.name,
+      description: program.description,
+      bountyRanges: program.bountyRanges,
+      markdown: program.markdown,
     }
   });
 
@@ -126,18 +122,18 @@ export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps
         scope: scope.map(({ id, ...rest }) => rest)
       };
       
-      const response = await createProgram(payload);
+      const response = await updateProgram(program.id, payload);
       
-      if (onProgramAdded) {
-        onProgramAdded(response);
+      if (onProgramUpdated) {
+        onProgramUpdated(response);
       }
   
-      setSuccessMessage('Le programme a été enregistré avec succès.');
+      setSuccessMessage('Le programme a été mis à jour avec succès.');
   
       if (onCancel) onCancel();
     } catch (err) {
-      console.error('Erreur lors de la soumission du programme:', err);
-      setError('Une erreur est survenue lors de la soumission du programme. Veuillez réessayer.');
+      console.error('Erreur lors de la mise à jour du programme:', err);
+      setError('Une erreur est survenue lors de la mise à jour du programme. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -237,7 +233,7 @@ export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps
                 >
                   {isSubmitting 
                     ? 'Envoi en cours...' 
-                    : 'Confirmer et créer'}
+                    : 'Mettre à jour'}
                 </button>
               </div>
             </div>
@@ -262,7 +258,7 @@ export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps
               </button>
             )}
             <h1 className="text-2xl font-bold text-white">
-              Créer un nouveau programme
+              Modifier le programme
             </h1>
           </div>
 
@@ -486,7 +482,7 @@ export default function AddProgram({ onCancel, onProgramAdded }: AddProgramProps
               >
                 {isSubmitting 
                   ? 'Envoi en cours...' 
-                  : 'Créer le programme'}
+                  : 'Mettre à jour'}
               </button>
             </div>
           </form>

@@ -44,7 +44,7 @@ const SidebarEnt: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => 
           <li>
             <button 
               className={`w-full flex items-center px-4 py-2 text-left rounded-md ${currentView === 'settings' ? 'bg-primary-600 text-white' : 'hover:bg-gray-700 text-gray-300'}`}
-              onClick={() => setCurrentView('settings')}
+              onClick={() => setCurrentView('SettingsPage')}
             >
               <Settings className="mr-2 h-4 w-4" />
               Paramètres

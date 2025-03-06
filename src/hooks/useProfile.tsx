@@ -16,6 +16,8 @@ interface Profile {
   };
 }
 
+const role = "hacker";
+
 const useProfile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [programme, setProgramme] = useState<Program | null>(null);
@@ -31,38 +33,55 @@ const useProfile = () => {
       setError(null);
       try {
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  
         // Récupérer le profil
         const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
           withCredentials: true,
         });
         setProfile(response.data);
-
+  
         // Récupérer les programmes de l'entreprise
         const programmeData = await axios.get(`${API_BASE_URL}/api/programmes/entreprise`, {
           withCredentials: true,
         });
         setProgramme(programmeData.data);
+  
+        // Vérifier si les programmes existent
+        if (programmeData.data?.programmes && programmeData.data.programmes.length > 0) {
+          // Prendre le premier programme par exemple
+          const firstProgramme = programmeData.data.programmes[0];
+  
+          if (firstProgramme.url) {
+            const jsonUrl = `${API_BASE_URL}${firstProgramme.url}`;
+            console.log("URL du fichier JSON:", jsonUrl); // Affiche l'URL pour vérification
+  
+            // Récupérer le contenu du fichier JSON
+            const jsonResponse = await axios.get(jsonUrl, {
+              withCredentials: true, // Ajouter les credentials si nécessaire
+            });
+            setProgrammeDetails(jsonResponse.data); // Stocker les données du JSON
+          }
 
-        // Vérifier si l'URL du fichier JSON est présente
-        if (programmeData.data?.url) {
-          const jsonUrl = `${API_BASE_URL}${programmeData.data.url}`; // Construire l'URL complète
+          // Récupérer les détails de tous les programmes
+          const allProgrammesDetails = [];
+          for (const programme of programmeData.data.programmes) {
+            if (programme.url) {
+              const jsonUrl = `${API_BASE_URL}${programme.url}`;
+              const jsonResponse = await axios.get(jsonUrl, { withCredentials: true });
+              allProgrammesDetails.push(jsonResponse.data);
+            }
+          }
 
-          // Récupérer le contenu du fichier JSON
-          const jsonResponse = await axios.get(jsonUrl, {
-            withCredentials: true, // Ajouter les credentials si besoin
-          });
-
-          setProgrammeDetails(jsonResponse.data); // Stocker les données du JSON
+          // Mettre à jour l'état avec toutes les données des programmes
+          setProgrammeDetails(allProgrammesDetails);
         }
       } catch (error) {
         setError('Erreur lors de la récupération du profil.');
         if (axios.isAxiosError(error)) {
-          if (error.response?.status === 401) {
+          if (error.response?.status === 401 && role === "hacker") {
             navigate('/hacker/login'); // Rediriger vers la page de connexion si non authentifié
           } else {
-            const errorMessage = error.response?.data?.message || 'Erreur inconnue.';
-            toast({ variant: 'destructive', title: 'Erreur', description: errorMessage });
+            navigate('/entreprise/login');
           }
         } else {
           toast({ variant: 'destructive', title: 'Erreur', description: 'Erreur inconnue.' });
@@ -71,7 +90,7 @@ const useProfile = () => {
         setLoading(false);
       }
     };
-
+  
     fetchProfile();
   }, [toast, navigate]);
 
